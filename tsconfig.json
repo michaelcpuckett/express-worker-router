@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "declaration": true,
+    "noImplicitAny": false,
+    "removeComments": true,
+    "noLib": false,
+    "jsx": "react-jsx",
+    "lib": ["ES2020", "DOM", "WebWorker", "DOM.Iterable"],
+    "target": "ES2020",
+    "outDir": "../dist",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "useDefineForClassFields": false,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "compiled/*": ["../swar/.app-router/*"],
+      "public/*": ["../swar/public/*"],
+      "app/*": ["../swar/src/app/*"],
+      "components/*": ["../swar/src/components/*"],
+      "utils/*": ["../swar/src/utils/*"],
+      "app-router/*": ["../swar-files/src/*"]
+    }
+  },
+  "include": ["./src/*"]
+}
