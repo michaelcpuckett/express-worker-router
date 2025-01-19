@@ -1,17 +1,29 @@
+#!/usr/bin/env node
+
+const esbuild = require('esbuild');
 const fs = require('fs');
 const path = require('path');
-const { Parcel } = require('@parcel/core');
-
 const cwd = process.cwd();
 
-console.log({
-  cwd,
-  __dirname,
-});
+function makeDirectoryIfNotExists() {
+  const dir = path.resolve(cwd, '.express-worker-router');
+
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir);
+
+    const cacheFilePath = path.resolve(dir, 'cache.json');
+    const cache = {
+      version: 1,
+    };
+
+    fs.writeFileSync(cacheFilePath, JSON.stringify(cache, null, 2));
+  }
+}
+
+makeDirectoryIfNotExists();
 
 function getAppRoutes() {
   const routes = [];
-
   const appDir = path.resolve(cwd, './src/app');
 
   function traverseDirectory(currentDir) {
@@ -40,10 +52,14 @@ const toCamelCase = (string) => {
   return string.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
 };
 
-function writeAppRoutesToFile() {
+async function writeAppRoutesToFile() {
   try {
     const routes = getAppRoutes();
-    const outputPath = path.resolve(cwd, './.app-router', 'routes.ts');
+    const outputPath = path.resolve(
+      cwd,
+      './.express-worker-router',
+      'routes.ts',
+    );
 
     fs.writeFileSync(
       outputPath,
@@ -75,7 +91,13 @@ function writeAppRoutesToFile() {
 }
 
 function getStaticFiles() {
-  return fs.readdirSync(path.resolve(cwd, 'public')).map((file) => {
+  return Array.from(
+    new Set([
+      'service-worker.js',
+      'hydration.js',
+      ...fs.readdirSync(path.resolve(cwd, 'public')),
+    ]),
+  ).map((file) => {
     return '/' + file;
   });
 }
@@ -83,7 +105,11 @@ function getStaticFiles() {
 function writeStaticFilesToFile() {
   try {
     const staticFiles = getStaticFiles();
-    const outputPath = path.resolve(cwd, './.app-router', 'static.json');
+    const outputPath = path.resolve(
+      cwd,
+      '.express-worker-router',
+      'static.json',
+    );
 
     fs.writeFileSync(outputPath, JSON.stringify(staticFiles, null, 2));
 
@@ -93,52 +119,37 @@ function writeStaticFilesToFile() {
   }
 }
 
+writeAppRoutesToFile();
+writeStaticFilesToFile();
+
 (async () => {
   try {
-    writeAppRoutesToFile();
-    writeStaticFilesToFile();
+    const config = {
+      logLevel: 'warning',
+      bundle: true,
+      platform: 'browser',
+      target: 'es2018',
+      format: 'cjs',
+      sourcemap: false,
+    };
 
-    const relativeDirectoryPath = path.resolve(__dirname, '../');
-    const relativeConfigPath = path.relative(
-      cwd,
-      path.resolve(relativeDirectoryPath, '.parcelrc'),
-    );
-    const relativePublicPath = path.relative(
-      cwd,
-      path.resolve(cwd, './public'),
-    );
-
-    const bundler = new Parcel({
-      entries: [relativeDirectoryPath],
-      config: relativeConfigPath,
-      mode: 'production',
-      targets: {
-        app: {
-          outputFormat: 'commonjs',
-          sourceMap: false,
-          distDir: relativePublicPath,
-          distEntry: 'app.js',
-          context: 'service-worker',
-        },
-        client: {
-          outputFormat: 'commonjs',
-          sourceMap: false,
-          distDir: relativePublicPath,
-          distEntry: 'client.js',
-          context: 'browser',
-        },
-      },
-      additionalReporters: [
-        {
-          packageName: '@parcel/reporter-cli',
-          resolveFrom: cwd,
-        },
-      ],
+    await esbuild.build({
+      ...config,
+      tsconfig: './service-worker/tsconfig.json',
+      outfile: 'public/service-worker.js',
+      entryPoints: ['./service-worker/index.ts'],
     });
 
-    const { bundleGraph, buildTime } = await bundler.run();
-    const bundles = bundleGraph.getBundles();
-    console.log(`✨ Built ${bundles.length} bundles in ${buildTime}ms!`);
+    console.log('✅ Service worker file built successfully!');
+
+    await esbuild.build({
+      ...config,
+      tsconfig: './hydration/tsconfig.json',
+      outfile: 'public/hydration.js',
+      entryPoints: ['./hydration/index.ts'],
+    });
+
+    console.log('✅ Hydration file built successfully!');
   } catch (error) {
     console.error('❌ Error building project:', error);
   }

@@ -1,45 +1,40 @@
 {
-  "name": "sw-app-router",
-  "version": "1.0.0",
+  "name": "@express-worker/router",
+  "version": "1.1.6",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Serve dynamic HTML with React inside a Service Worker",
   "scripts": {
     "format": "prettier --config .prettierrc \"**/*.{ts,tsx}\" --write"
   },
   "author": "Michael Puckett <michael@puckett.contact>",
   "license": "MIT",
-  "targets": {
-    "app": {
-      "source": "./src/app.tsx",
-      "context": "service-worker",
-      "sourceMap": false
-    },
-    "client": {
-      "source": "./src/client.tsx",
-      "context": "browser",
-      "sourceMap": false
-    }
-  },
   "files": [
-    "build",
+    "bin",
     "src"
   ],
+  "exports": {
+    ".": "./src/types.ts",
+    "./hydration": "./src/hydration.tsx",
+    "./service-worker": "./src/service-worker.tsx",
+    "./bin": "./bin",
+    "./src": "./src"
+  },
   "bin": {
     "build": "./bin/build.js",
     "watch": "./bin/watch.js"
   },
   "dependencies": {
     "@express-worker/app": "^1.5.0",
-    "@parcel/config-default": "^2.13.3",
-    "@parcel/core": "^2.13.3",
-    "cross-env": "^7.0.3",
     "http-server": "^14.1.1",
-    "parcel": "^2.13.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router": "^7.1.1"
+    "react-router": "^7.1.1",
+    "esbuild": "^0.24.2"
   },
   "devDependencies": {
-    "@parcel/transformer-typescript-tsc": "^2.13.3",
+    "@types/http-server": "^0.12.4",
     "@types/node": "^22.10.7",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
