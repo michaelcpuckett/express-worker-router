@@ -102,8 +102,6 @@ export default function HomePage({ data }: { data: Data }) {
 
 ## Development
 
-Use `npm run serve` and `npm run dev` during development.
-
 For easiest debugging, in the Web Inspector, under the Application tab, under
 Service Workers, select the checkbox for "Update on reload".
 
