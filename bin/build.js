@@ -5,6 +5,12 @@ const fs = require('fs');
 const path = require('path');
 const cwd = process.cwd();
 
+makeDirectoryIfNotExists();
+writeRouteConfigFile();
+writeStaticAssetsFile();
+copyCacheJsonFile();
+runEsBuild();
+
 function makeDirectoryIfNotExists() {
   const dir = path.resolve(cwd, '.express-worker-router');
 
@@ -19,8 +25,6 @@ function makeDirectoryIfNotExists() {
     fs.writeFileSync(cacheFilePath, JSON.stringify(cache, null, 2));
   }
 }
-
-makeDirectoryIfNotExists();
 
 function getAppRoutes() {
   const routes = [];
@@ -52,7 +56,7 @@ const toCamelCase = (string) => {
   return string.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
 };
 
-async function writeAppRoutesToFile() {
+async function writeRouteConfigFile() {
   try {
     const routes = getAppRoutes();
     const outputPath = path.resolve(
@@ -102,7 +106,7 @@ function getStaticFiles() {
   });
 }
 
-function writeStaticFilesToFile() {
+function writeStaticAssetsFile() {
   try {
     const staticFiles = getStaticFiles();
     const outputPath = path.resolve(
@@ -119,10 +123,22 @@ function writeStaticFilesToFile() {
   }
 }
 
-writeAppRoutesToFile();
-writeStaticFilesToFile();
+function copyCacheJsonFile() {
+  try {
+    const cacheFilePath = path.resolve(
+      cwd,
+      '.express-worker-router',
+      'cache.json',
+    );
+    const outputPath = path.resolve(cwd, 'public', 'cache.json');
 
-(async () => {
+    fs.copyFileSync(cacheFilePath, outputPath);
+  } catch (error) {
+    console.error('❌ Error copying cache file:', error);
+  }
+}
+
+async function runEsBuild() {
   try {
     const config = {
       logLevel: 'warning',
@@ -153,4 +169,4 @@ writeStaticFilesToFile();
   } catch (error) {
     console.error('❌ Error building project:', error);
   }
-})();
+}
