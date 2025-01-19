@@ -18,11 +18,17 @@ function makeDirectoryIfNotExists() {
     fs.mkdirSync(dir);
 
     const cacheFilePath = path.resolve(dir, 'cache.json');
-    const cache = {
-      version: 1,
-    };
+    const publicCacheFilePath = path.resolve(cwd, 'public', 'cache.json');
 
-    fs.writeFileSync(cacheFilePath, JSON.stringify(cache, null, 2));
+    if (fs.existsSync(publicCacheFilePath)) {
+      fs.copyFileSync(publicCacheFilePath, cacheFilePath);
+    } else {
+      const cache = {
+        version: 1,
+      };
+
+      fs.writeFileSync(cacheFilePath, JSON.stringify(cache, null, 2));
+    }
   }
 }
 
