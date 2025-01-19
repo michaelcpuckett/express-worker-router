@@ -52,9 +52,9 @@ function getAppRoutes() {
   return routes;
 }
 
-const toCamelCase = (string) => {
+function toCamelCase(string) {
   return string.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
-};
+}
 
 async function writeRouteConfigFile() {
   try {
