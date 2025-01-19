@@ -4,35 +4,60 @@ const esbuild = require('esbuild');
 const fs = require('fs');
 const path = require('path');
 const cwd = process.cwd();
+const dotDirectory = path.resolve(cwd, '.express-worker-router');
+const hydrationDirectory = path.resolve(dotDirectory, 'hydration');
+const serviceWorkerDirectory = path.resolve(dotDirectory, 'service-worker');
+const nestedDirectoryTsConfig = {
+  compilerOptions: {
+    strict: true,
+    module: 'nodenext',
+    esModuleInterop: true,
+    skipLibCheck: true,
+    moduleResolution: 'nodenext',
+    sourceMap: true,
+    declaration: true,
+    noImplicitAny: true,
+    removeComments: true,
+    noLib: false,
+    jsx: 'react-jsx',
+    lib: ['ES2020', 'DOM', 'DOM.Iterable'],
+    target: 'ES2020',
+    experimentalDecorators: true,
+    emitDecoratorMetadata: true,
+    useDefineForClassFields: false,
+    isolatedModules: true,
+    resolveJsonModule: true,
+    paths: {
+      'app/*': ['../../src/app/*'],
+      'components/*': ['../../src/components/*'],
+      'utils/*': ['../../src/utils/*'],
+    },
+  },
+  include: ['./*'],
+};
 
-makeDirectoryIfNotExists();
-writeRouteConfigFile();
-writeStaticAssetsFile();
-copyCacheJsonFile();
+writeDotDirectory();
 runEsBuild();
 
-function makeDirectoryIfNotExists() {
-  const dir = path.resolve(cwd, '.express-worker-router');
-
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir);
-
-    const cacheFilePath = path.resolve(dir, 'cache.json');
-    const publicCacheFilePath = path.resolve(cwd, 'public', 'cache.json');
-
-    if (fs.existsSync(publicCacheFilePath)) {
-      fs.copyFileSync(publicCacheFilePath, cacheFilePath);
-    } else {
-      const cache = {
-        version: 1,
-      };
-
-      fs.writeFileSync(cacheFilePath, JSON.stringify(cache, null, 2));
+function writeDotDirectory() {
+  try {
+    if (!fs.existsSync(dotDirectory)) {
+      fs.mkdirSync(dotDirectory);
     }
+
+    console.log('✅ Dot directory created successfully!');
+  } catch (error) {
+    console.error('❌ Error creating dot directory:', error);
   }
+
+  writeCacheJsonFile();
+  writeHydrationDirectory();
+  writeServiceWorkerDirectory();
+  writeRoutesConfigDirectory();
+  writeStaticAssetsFile();
 }
 
-function getAppRoutes() {
+function getRoutesFromAppDirectory() {
   const routes = [];
   const appDir = path.resolve(cwd, './src/app');
 
@@ -55,6 +80,7 @@ function getAppRoutes() {
   }
 
   traverseDirectory(appDir);
+
   return routes;
 }
 
@@ -62,18 +88,17 @@ function toCamelCase(string) {
   return string.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
 }
 
-async function writeRouteConfigFile() {
+async function writeRoutesConfigDirectory() {
   try {
-    const routes = getAppRoutes();
-    const outputPath = path.resolve(
-      cwd,
-      './.express-worker-router',
-      'routes.ts',
-    );
+    const routes = getRoutesFromAppDirectory();
+    const routeConfigDirectoryPath = path.resolve(dotDirectory, 'routes');
 
-    fs.writeFileSync(
-      outputPath,
-      `const Routes: Record<string, any> = {};
+    if (!fs.existsSync(routeConfigDirectoryPath)) {
+      fs.mkdirSync(routeConfigDirectoryPath);
+    }
+
+    const routesConfigFileContent = `
+      const Routes: Record<string, any> = {};
 
       ${routes
         .map((route) => {
@@ -91,10 +116,19 @@ async function writeRouteConfigFile() {
         })
         .join('\n')}
         
-        export default Routes;
-      `,
+      export default Routes;
+    `;
+
+    fs.writeFileSync(
+      path.resolve(routeConfigDirectoryPath, 'index.ts'),
+      routesConfigFileContent,
     );
-    console.log(`✅ Routes generated successfully! See ${outputPath}`);
+
+    fs.writeFileSync(
+      path.resolve(routeConfigDirectoryPath, 'tsconfig.json'),
+      JSON.stringify(nestedDirectoryTsConfig, null, 2),
+    );
+    console.log(`✅ Routes generated successfully!`);
   } catch (error) {
     console.error('❌ Error generating routes:', error);
   }
@@ -105,6 +139,7 @@ function getStaticFiles() {
     new Set([
       'service-worker.js',
       'hydration.js',
+      'cache.json',
       ...fs.readdirSync(path.resolve(cwd, 'public')),
     ]),
   ).map((file) => {
@@ -115,38 +150,51 @@ function getStaticFiles() {
 function writeStaticAssetsFile() {
   try {
     const staticFiles = getStaticFiles();
-    const outputPath = path.resolve(
-      cwd,
-      '.express-worker-router',
-      'static.json',
-    );
+    const outputPath = path.resolve(dotDirectory, 'static.json');
 
     fs.writeFileSync(outputPath, JSON.stringify(staticFiles, null, 2));
 
-    console.log(`✅ Static files generated successfully! See ${outputPath}`);
+    console.log(`✅ Static files generated successfully!`);
   } catch (error) {
     console.error('❌ Error generating static files:', error);
   }
 }
 
-function copyCacheJsonFile() {
+function writeCacheJsonFile() {
   try {
-    const cacheFilePath = path.resolve(
-      cwd,
-      '.express-worker-router',
-      'cache.json',
-    );
-    const outputPath = path.resolve(cwd, 'public', 'cache.json');
+    const dotDirectoryCacheFilePath = path.resolve(dotDirectory, 'cache.json');
+    const publicDirectoryCacheFilePath = path.resolve(cwd, 'public/cache.json');
+    const configFilePath = path.resolve(cwd, 'router.config.json');
 
-    fs.copyFileSync(cacheFilePath, outputPath);
+    const cache = (() => {
+      if (fs.existsSync(configFilePath)) {
+        const configFileContents = fs.readFileSync(configFilePath, 'utf-8');
+        const config = JSON.parse(configFileContents);
+
+        return {
+          version: config.version,
+        };
+      } else {
+        return {
+          version: 1,
+        };
+      }
+    })();
+
+    const cacheFileContents = JSON.stringify(cache, null, 2);
+
+    fs.writeFileSync(dotDirectoryCacheFilePath, cacheFileContents);
+    fs.writeFileSync(publicDirectoryCacheFilePath, cacheFileContents);
+
+    console.log('✅ Cache file written successfully!');
   } catch (error) {
-    console.error('❌ Error copying cache file:', error);
+    console.error('❌ Error writing cache file:', error);
   }
 }
 
 async function runEsBuild() {
   try {
-    const config = {
+    const esbuildConfig = {
       logLevel: 'warning',
       bundle: true,
       platform: 'browser',
@@ -156,23 +204,83 @@ async function runEsBuild() {
     };
 
     await esbuild.build({
-      ...config,
-      tsconfig: './service-worker/tsconfig.json',
+      ...esbuildConfig,
+      tsconfig: './.express-worker-router/service-worker/tsconfig.json',
       outfile: 'public/service-worker.js',
-      entryPoints: ['./service-worker/index.ts'],
+      entryPoints: ['./.express-worker-router/service-worker/index.ts'],
     });
 
     console.log('✅ Service worker file built successfully!');
 
     await esbuild.build({
-      ...config,
-      tsconfig: './hydration/tsconfig.json',
+      ...esbuildConfig,
+      tsconfig: './.express-worker-router/hydration/tsconfig.json',
       outfile: 'public/hydration.js',
-      entryPoints: ['./hydration/index.ts'],
+      entryPoints: ['./.express-worker-router/hydration/index.ts'],
     });
 
     console.log('✅ Hydration file built successfully!');
   } catch (error) {
     console.error('❌ Error building project:', error);
+  }
+}
+
+function writeHydrationDirectory() {
+  const hydrationFileContent = `
+import routesConfig from '../routes/index';
+import { useHydration } from '@express-worker/router/hydration';
+
+useHydration({ routesConfig });
+`;
+
+  try {
+    if (!fs.existsSync(hydrationDirectory)) {
+      fs.mkdirSync(hydrationDirectory);
+    }
+
+    fs.writeFileSync(
+      path.resolve(hydrationDirectory, 'index.ts'),
+      hydrationFileContent,
+    );
+
+    fs.writeFileSync(
+      path.resolve(hydrationDirectory, 'tsconfig.json'),
+      JSON.stringify(nestedDirectoryTsConfig, null, 2),
+    );
+
+    console.log('✅ Hydration TS files copied successfully!');
+  } catch (error) {
+    console.error('❌ Error copying hydration files:', error);
+  }
+}
+
+function writeServiceWorkerDirectory() {
+  const serviceWorkerFileContent = `
+  import { version } from '../cache.json';
+  import routesConfig from '../routes/index';
+  import staticFiles from '../static.json';
+  import { useAppRouter } from '@express-worker/router/service-worker';
+  
+  useAppRouter({ routesConfig, staticFiles, version });
+  `.trim();
+
+  try {
+    if (!fs.existsSync(serviceWorkerDirectory)) {
+      fs.mkdirSync(serviceWorkerDirectory);
+    }
+
+    fs.writeFileSync(
+      path.resolve(serviceWorkerDirectory, 'index.ts'),
+      serviceWorkerFileContent,
+    );
+
+    fs.writeFileSync(
+      path.resolve(serviceWorkerDirectory, 'tsconfig.json'),
+      JSON.stringify(nestedDirectoryTsConfig, null, 2),
+    );
+
+    console.log('✅ Service worker TS files copied successfully!');
+  } catch (error) {
+    console.error('❌ Error copying service worker TS files:', error);
   }
 }
