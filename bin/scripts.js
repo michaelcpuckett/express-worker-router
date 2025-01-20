@@ -8,7 +8,7 @@ const throttle = require('lodash.throttle');
 const { types } = require('util');
 const cwd = process.cwd();
 const dotDirectory = path.resolve(cwd, '.express-worker-router');
-const hydrationDirectory = path.resolve(dotDirectory, 'hydration');
+const windowDirectory = path.resolve(dotDirectory, 'window');
 const serviceWorkerDirectory = path.resolve(dotDirectory, 'service-worker');
 const nestedDirectoryTsConfig = {
   compilerOptions: {
@@ -30,7 +30,6 @@ const nestedDirectoryTsConfig = {
     useDefineForClassFields: false,
     isolatedModules: true,
     resolveJsonModule: true,
-    types: ['@express-worker/router'],
     paths: {
       'app/*': ['../../src/app/*'],
       'components/*': ['../../src/components/*'],
@@ -139,7 +138,7 @@ async function writeDotDirectory() {
   }
 
   writeCacheJsonFile();
-  await writeHydrationDirectory();
+  await writeWindowDirectory();
   await writeServiceWorkerDirectory();
   await writeRoutesConfigDirectory();
   writeStaticAssetsFile();
@@ -233,16 +232,19 @@ function getStaticFiles() {
       '404.html',
       'install.js',
       'service-worker.js',
-      'hydration.js',
+      'window.js',
       'cache.json',
       'critical.css',
-      'service-worker.css',
-      'hydration.css',
+      'window.css',
       ...fs.readdirSync(path.resolve(cwd, 'public')),
     ]),
-  ).map((file) => {
-    return '/' + file;
-  });
+  )
+    .filter((file) => {
+      return file !== 'service-worker.css';
+    })
+    .map((file) => {
+      return '/' + file;
+    });
 }
 
 function writeStaticAssetsFile() {
@@ -312,24 +314,24 @@ async function runEsBuild() {
 
     await esbuild.build({
       ...esbuildConfig,
-      tsconfig: './.express-worker-router/hydration/tsconfig.json',
-      outfile: 'public/hydration.js',
-      entryPoints: ['./.express-worker-router/hydration/index.ts'],
+      tsconfig: './.express-worker-router/window/tsconfig.json',
+      outfile: 'public/window.js',
+      entryPoints: ['./.express-worker-router/window/index.ts'],
     });
 
-    console.log('✅ Hydration file built successfully!');
+    console.log('✅ Window file built successfully!');
   } catch (error) {
     console.error('❌ Error building project:', error);
   }
 }
 
-async function writeHydrationDirectory() {
-  const hydrationFileContent = await prettier.format(
+async function writeWindowDirectory() {
+  const windowFileContent = await prettier.format(
     `
     import routesConfig from '../routes/index';
-    import { useHydration } from '@express-worker/router/hydration';
+    import { hydrateAppRouter } from '@express-worker/router/window';
 
-    useHydration({ routesConfig });
+    hydrateAppRouter({ routesConfig });
   `,
     {
       parser: 'typescript',
@@ -337,23 +339,23 @@ async function writeHydrationDirectory() {
   );
 
   try {
-    if (!fs.existsSync(hydrationDirectory)) {
-      fs.mkdirSync(hydrationDirectory);
+    if (!fs.existsSync(windowDirectory)) {
+      fs.mkdirSync(windowDirectory);
     }
 
     fs.writeFileSync(
-      path.resolve(hydrationDirectory, 'index.ts'),
-      hydrationFileContent,
+      path.resolve(windowDirectory, 'index.ts'),
+      windowFileContent,
     );
 
     fs.writeFileSync(
-      path.resolve(hydrationDirectory, 'tsconfig.json'),
+      path.resolve(windowDirectory, 'tsconfig.json'),
       JSON.stringify(nestedDirectoryTsConfig, null, 2),
     );
 
-    console.log('✅ Hydration TS files copied successfully!');
+    console.log('✅ Window TS files copied successfully!');
   } catch (error) {
-    console.error('❌ Error copying hydration files:', error);
+    console.error('❌ Error copying window files:', error);
   }
 }
 

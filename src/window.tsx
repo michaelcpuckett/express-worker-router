@@ -3,7 +3,7 @@ import { hydrateRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router';
 import { PageModule } from './types';
 
-export function useHydration({
+export function hydrateAppRouter({
   routesConfig,
 }: {
   routesConfig: Record<string, PageModule>;

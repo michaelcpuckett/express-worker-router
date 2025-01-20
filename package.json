@@ -1,6 +1,6 @@
 {
   "name": "@express-worker/router",
-  "version": "1.5.2",
+  "version": "1.5.7",
   "publishConfig": {
     "access": "public"
   },
@@ -16,7 +16,7 @@
   ],
   "exports": {
     ".": "./src/types.ts",
-    "./hydration": "./src/hydration.tsx",
+    "./window": "./src/window.tsx",
     "./service-worker": "./src/service-worker.tsx",
     "./bin": "./bin",
     "./src": "./src"

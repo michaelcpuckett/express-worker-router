@@ -111,7 +111,7 @@ export function useAppRouter({
             return response.text();
           })();
 
-          const jsFile = await cache.match('/hydration.js');
+          const jsFile = await cache.match('/window.js');
 
           if (!jsFile) {
             throw new Error('Cache miss.');
