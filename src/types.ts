@@ -20,3 +20,5 @@ export type PageModule = {
   getStaticProps: GetStaticProps;
   metadata: Metadata | GetMetadata;
 };
+
+declare module '*.module.css';

@@ -98,20 +98,18 @@ export function useAppRouter({
         try {
           const staticProps = await getStaticProps({ params: req.params });
           const cache = await caches.open('public');
-          const cssUrls = staticFiles.filter((url) => url.endsWith('.css'));
-          const cssFileContents = (
-            await Promise.all(
-              cssUrls.map(async (url) => {
-                const response = await cache.match(url);
+          const cssUrls = staticFiles
+            .filter((url) => url.endsWith('.css'))
+            .filter((url) => url !== '/critical.css');
+          const cssFileContents = await (async () => {
+            const response = await cache.match('/critical.css');
 
-                if (!response) {
-                  throw new Error('Cache miss.');
-                }
+            if (!response) {
+              throw new Error('Cache miss.');
+            }
 
-                return response.text();
-              }),
-            )
-          ).join('\n\n');
+            return response.text();
+          })();
 
           const jsFile = await cache.match('/hydration.js');
 
@@ -131,6 +129,7 @@ export function useAppRouter({
               metadata={metadata}
               staticProps={staticProps}
               css={cssFileContents}
+              cssRefs={cssUrls}
               js={jsFileContents}
             >
               <Component {...staticProps.props} />

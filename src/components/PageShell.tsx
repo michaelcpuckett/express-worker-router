@@ -5,12 +5,14 @@ export function PageShell({
   staticProps,
   metadata,
   css,
+  cssRefs,
   js,
   children,
 }: React.PropsWithChildren<{
   staticProps: Awaited<ReturnType<GetStaticProps>>;
   metadata: Metadata;
   css: string;
+  cssRefs: string[];
   js: string;
 }>) {
   return (
@@ -47,6 +49,13 @@ export function PageShell({
             )}`,
           }}
         />
+        {cssRefs.map((ref) => (
+          <link
+            key={ref}
+            rel="stylesheet"
+            href={ref}
+          />
+        ))}
         <script
           dangerouslySetInnerHTML={{
             __html: js.replace(/<\/script>/g, '</scr"+"ipt>'),

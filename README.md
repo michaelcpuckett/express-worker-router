@@ -1,8 +1,12 @@
 # @express-worker/router
 
-Serve dynamically-generated, React-hydrated HTML web pages in a Service Worker.
-Built on
-[@express-worker/app](https://github.com/michaelcpuckett/express-worker).
+ExpressWorker/Router provides a simple Next.js-like API for serving
+dynamically-generated, React-hydrated HTML web pages inside a Service Worker.
+
+This is part of the @express-worker ecosystem. It depends on
+[@express-worker/app](https://github.com/michaelcpuckett/express-worker) to
+serve the routes. If this project is too opinionated for your needs, consider
+using @express-worker/app directly.
 
 ## Features
 
@@ -13,8 +17,8 @@ structure under `src/app`.
 
 ### React SSR
 
-The initial page HTML is rendered by React-DOM/Server and gets hydrated by
-React-DOM/Client.
+The initial page HTML is rendered by React-DOM/Server which then gets hydrated
+by React-DOM/Client.
 
 ### Static File Handling
 
@@ -102,6 +106,8 @@ export default function HomePage({ data }: { data: Data }) {
 
 ## Development
 
+Run `npm run watch` and `npm run serve` in separate terminals.
+
 For easiest debugging, in the Web Inspector, under the Application tab, under
 Service Workers, select the checkbox for "Update on reload".
 
@@ -112,7 +118,10 @@ Styles can be edited directly in `public/styles.css`.
 Use `npm run build` to generate a production build.
 
 The built-in strategy for invalidating the old cache and serving the updated
-content is through incrementing the version in `public/cache.json`.
+content is through incrementing the version in `router.config.json`.
+
+Publish the `public` directory to a static file hosting service. A 404.html file
+should be served as a catch-all route.
 
 ## Benefits
 
