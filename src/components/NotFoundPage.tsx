@@ -35,6 +35,7 @@ export default function NotFoundPage({ css }: { css: string }) {
         title: 'Not Found',
       }}
       css={css}
+      cssRefs={[]}
       js=""
     >
       <header>

@@ -236,6 +236,8 @@ function getStaticFiles() {
       'hydration.js',
       'cache.json',
       'critical.css',
+      'service-worker.css',
+      'hydration.css',
       ...fs.readdirSync(path.resolve(cwd, 'public')),
     ]),
   ).map((file) => {
