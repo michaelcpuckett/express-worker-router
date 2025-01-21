@@ -1,9 +1,6 @@
 {
-  "name": "@express-worker/router",
-  "version": "1.7.15",
-  "publishConfig": {
-    "access": "public"
-  },
+  "name": "swarf",
+  "version": "0.0.8",
   "description": "Serve dynamic HTML with React inside a Service Worker",
   "scripts": {
     "format": "prettier --config .prettierrc \"**/*.{ts,tsx}\" --write"
@@ -22,7 +19,7 @@
     "./src": "./src"
   },
   "bin": {
-    "ewr": "./bin/scripts.js"
+    "swarf": "./bin/scripts.js"
   },
   "dependencies": {
     "@express-worker/app": "^1.5.0",

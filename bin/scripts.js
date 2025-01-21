@@ -12,7 +12,7 @@ const cwd = process.cwd();
 const publicDirectory = path.resolve(cwd, 'public');
 const srcDirectory = path.resolve(cwd, 'src');
 const appDirectory = path.resolve(srcDirectory, 'app');
-const dotDirectory = path.resolve(cwd, '.ewr');
+const dotDirectory = path.resolve(cwd, '.swarf');
 const windowDirectory = path.resolve(dotDirectory, 'window');
 const serviceWorkerDirectory = path.resolve(dotDirectory, 'service-worker');
 const tsConfig = {
@@ -313,9 +313,9 @@ async function runEsBuild() {
 
     await esbuild.build({
       ...esbuildConfig,
-      tsconfig: './.ewr/service-worker/tsconfig.json',
+      tsconfig: './.swarf/service-worker/tsconfig.json',
       outfile: 'public/service-worker.js',
-      entryPoints: ['./.ewr/service-worker/index.ts'],
+      entryPoints: ['./.swarf/service-worker/index.ts'],
     });
 
     fs.rmSync(path.resolve(cwd, 'public', 'service-worker.css'));
@@ -324,9 +324,9 @@ async function runEsBuild() {
 
     await esbuild.build({
       ...esbuildConfig,
-      tsconfig: './.ewr/window/tsconfig.json',
+      tsconfig: './.swarf/window/tsconfig.json',
       outfile: 'public/window.js',
-      entryPoints: ['./.ewr/window/index.ts'],
+      entryPoints: ['./.swarf/window/index.ts'],
     });
 
     console.log('✅ Window file built successfully!');
@@ -339,7 +339,7 @@ async function writeWindowDirectory() {
   const windowFileContent = await prettier.format(
     `
     import routesConfig from '../routes/index';
-    import { hydrateAppRouter } from '@express-worker/router/window';
+    import { hydrateAppRouter } from 'swarf/window';
 
     hydrateAppRouter({ routesConfig });
   `,
@@ -375,7 +375,7 @@ async function writeServiceWorkerDirectory() {
     import { version } from '../cache.json';
     import routesConfig from '../routes/index';
     import staticFiles from '../static.json';
-    import { useAppRouter } from '@express-worker/router/service-worker';
+    import { useAppRouter } from 'swarf/service-worker';
     
     useAppRouter({ routesConfig, staticFiles, version });
   `,
@@ -469,7 +469,70 @@ module.exports.clean = () => {
     fs.rmSync(publicDirectory, { recursive: true });
   }
 
-  console.log('✅ Removed ewr built files!');
+  console.log('✅ Removed built files!');
+};
+
+function writeAppDirectory() {
+  if (!fs.existsSync(srcDirectory)) {
+    fs.mkdirSync(srcDirectory);
+  }
+
+  if (!fs.existsSync(appDirectory)) {
+    fs.mkdirSync(appDirectory);
+
+    const tsConfig = {
+      compilerOptions: {
+        strict: true,
+        module: 'nodenext',
+        esModuleInterop: true,
+        skipLibCheck: true,
+        moduleResolution: 'nodenext',
+        sourceMap: true,
+        declaration: true,
+        noImplicitAny: true,
+        removeComments: true,
+        noLib: false,
+        jsx: 'react-jsx',
+        lib: ['ES2020', 'DOM', 'DOM.Iterable'],
+        target: 'ES2020',
+        experimentalDecorators: true,
+        emitDecoratorMetadata: true,
+        useDefineForClassFields: false,
+        isolatedModules: true,
+        resolveJsonModule: true,
+        baseUrl: '.',
+        paths: {
+          '*': ['*', './*/'],
+        },
+        types: ['../swarf-env.d.ts'],
+      },
+      include: ['./**/*'],
+    };
+
+    fs.writeFileSync(
+      path.resolve(appDirectory, 'tsconfig.json'),
+      JSON.stringify(tsConfig, null, 2),
+    );
+
+    fs.writeFileSync(
+      path.resolve(appDirectory, 'index.html'),
+      `<!DOCTYPE html><script src="/install.js"></script>`,
+    );
+
+    fs.writeFileSync(path.resolve(appDirectory, 'globals.css'), '');
+  }
+}
+
+function writeTypeDefinitionFile() {
+  const typeDefinitionFileContents = `declare module '*.module.css';`;
+  const typeDefinitionFilePath = path.resolve(cwd, 'swarf-env.d.ts');
+
+  fs.writeFileSync(typeDefinitionFilePath, typeDefinitionFileContents);
+}
+
+module.exports.init = () => {
+  writeAppDirectory();
+  writeTypeDefinitionFile();
 };
 
 if (process.argv[2]) {
@@ -479,5 +542,7 @@ if (process.argv[2]) {
     module.exports.dev();
   } else if (process.argv[2] === 'clean') {
     module.exports.clean();
+  } else if (process.argv[2] === 'init') {
+    module.exports.init();
   }
 }

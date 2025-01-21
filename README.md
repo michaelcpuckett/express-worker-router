@@ -1,12 +1,20 @@
-# @express-worker/router (EWR)
+# Swarf
 
-EWR provides a simple Next.js-like API for serving dynamically-generated,
-React-hydrated HTML web pages inside a Service Worker.
+**Swarf** stands for **Service Worker App Router Framework**.
 
-This is part of the @express-worker ecosystem. It depends on
+It is a package that provides an API similar to Next.js's App Router, but
+designed for a Service Worker context.
+
+## Philosophy
+
+Swarf is an opinionated framework that requires using TypeScript and TSX.
+
+Under the hood, this package uses
 [@express-worker/app](https://github.com/michaelcpuckett/express-worker) to
-serve the routes. If this project is too opinionated for your needs, consider
-using @express-worker/app directly.
+serve the routes. If this framework is too opinionated for your needs, consider
+using @express-worker/app directly. For a more fully-featured Service Worker
+framework, look to Google's
+[Workbox](https://developer.chrome.com/docs/workbox).
 
 ## Features
 
@@ -22,12 +30,14 @@ by React-DOM/Client.
 
 ### Static File Handling
 
-Static files in the `public` directory are cached and served by the service
+Static files in the `src/app` directory are cached and served by the service
 worker.
 
 ## Installation
 
-The repository needs to be set up with a specific directory structure.
+After running `npm install swarf --save`, create a `src\app` folder. The folders
+inside are used to define the routes. Folders can be nested. The `page.tsx` file
+inside each folder is the component that renders the body of the page.
 
 Base the directory structure on the
 [starter kit](https://github.com/michaelcpuckett/sw-app-router-starter).
@@ -51,6 +61,10 @@ To add a new page:
 3. Define and export `getStaticProps` and `metadata`. (See below.)
 
 4. Run `npm run build` to regenerate the routes.
+
+See the
+[Next.js documentation](https://nextjs.org/docs/app/getting-started/layouts-and-pages#creating-a-page)
+but be mindful of differences, such as the lack of `layout.tsx`.
 
 ### Static Props
 
@@ -106,14 +120,14 @@ export default function HomePage({ data }: { data: Data }) {
 
 ## Development
 
-Run `ewr dev` during development.
+Run `swarf dev` during development.
 
 For easiest debugging, in the Web Inspector, under the Application tab, under
 Service Workers, select the checkbox for "Update on reload".
 
 ## Production Builds
 
-Run `ewr build` to generate a production build/
+Run `swarf build` to generate a production build/
 
 The built-in strategy for invalidating the old cache and serving the updated
 content is through incrementing the version in `router.config.json`.
