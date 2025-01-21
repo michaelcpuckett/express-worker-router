@@ -1,6 +1,6 @@
 {
   "name": "@express-worker/router",
-  "version": "1.5.7",
+  "version": "1.6.1",
   "publishConfig": {
     "access": "public"
   },
@@ -22,8 +22,7 @@
     "./src": "./src"
   },
   "bin": {
-    "ewr-build": "./bin/build.js",
-    "ewr-watch": "./bin/watch.js"
+    "ewr": "./bin/scripts.js"
   },
   "dependencies": {
     "@express-worker/app": "^1.5.0",

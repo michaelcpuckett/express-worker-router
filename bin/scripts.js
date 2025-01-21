@@ -2,12 +2,13 @@
 
 const esbuild = require('esbuild');
 const fs = require('fs');
+const fsPromises = require('node:fs/promises');
 const path = require('path');
 const prettier = require('prettier');
 const throttle = require('lodash.throttle');
-const { types } = require('util');
+const httpServer = require('http-server');
 const cwd = process.cwd();
-const dotDirectory = path.resolve(cwd, '.express-worker-router');
+const dotDirectory = path.resolve(cwd, '.ewr');
 const windowDirectory = path.resolve(dotDirectory, 'window');
 const serviceWorkerDirectory = path.resolve(dotDirectory, 'service-worker');
 const nestedDirectoryTsConfig = {
@@ -305,18 +306,20 @@ async function runEsBuild() {
 
     await esbuild.build({
       ...esbuildConfig,
-      tsconfig: './.express-worker-router/service-worker/tsconfig.json',
+      tsconfig: './.ewr/service-worker/tsconfig.json',
       outfile: 'public/service-worker.js',
-      entryPoints: ['./.express-worker-router/service-worker/index.ts'],
+      entryPoints: ['./.ewr/service-worker/index.ts'],
     });
+
+    fs.rmSync(path.resolve(cwd, 'public', 'service-worker.css'));
 
     console.log('✅ Service worker file built successfully!');
 
     await esbuild.build({
       ...esbuildConfig,
-      tsconfig: './.express-worker-router/window/tsconfig.json',
+      tsconfig: './.ewr/window/tsconfig.json',
       outfile: 'public/window.js',
-      entryPoints: ['./.express-worker-router/window/index.ts'],
+      entryPoints: ['./.ewr/window/index.ts'],
     });
 
     console.log('✅ Window file built successfully!');
@@ -395,26 +398,103 @@ async function writeServiceWorkerDirectory() {
   }
 }
 
-module.exports.buildScript = () => {
+module.exports.build = () => {
   writePublicDirectory().then(writeDotDirectory).then(runEsBuild);
 };
 
-module.exports.watchScript = () => {
+async function runHttpServer() {
+  console.log('Starting server...');
+  return await new Promise((resolve) => {
+    try {
+      const server = httpServer.createServer({
+        root: path.resolve(cwd, 'public'),
+      });
+
+      server.listen(8080, () => {
+        console.log('Server running at http://localhost:8080/');
+        resolve();
+      });
+    } catch (error) {
+      console.error('❌ Error starting server:', error);
+      reject(error);
+    }
+  });
+}
+
+module.exports.dev = () => {
   const runThrottledBuild = throttle(
     () => {
       console.log('👀 Files changed.');
       runEsBuild();
     },
-    1000,
+    250,
     {
-      leading: true,
-      trailing: false,
+      leading: false,
+      trailing: true,
     },
   );
 
-  fs.watch(path.resolve(cwd, 'src'), { recursive: true }, () => {
-    runThrottledBuild();
-  });
+  runHttpServer().then(async () => {
+    const watcher = fsPromises.watch(path.resolve(cwd, 'src'), {
+      recursive: true,
+    });
 
-  console.log('Watching for changes...');
+    console.log('Watching for changes...');
+
+    for await (const _ of watcher) {
+      runThrottledBuild();
+    }
+  });
 };
+
+module.exports.clean = () => {
+  if (fs.existsSync(dotDirectory)) {
+    fs.rmSync(dotDirectory, { recursive: true });
+  }
+
+  const cacheFilePath = path.resolve(cwd, 'public', 'cache.json');
+  if (fs.existsSync(cacheFilePath)) {
+    fs.rmSync(path.resolve(cacheFilePath));
+  }
+
+  const staticFilePath = path.resolve(cwd, 'public', 'static.json');
+  if (fs.existsSync(staticFilePath)) {
+    fs.rmSync(path.resolve(staticFilePath));
+  }
+
+  const installFilePath = path.resolve(cwd, 'public', 'install.js');
+  if (fs.existsSync(installFilePath)) {
+    fs.rmSync(path.resolve(installFilePath));
+  }
+
+  const serviceWorkerFilePath = path.resolve(
+    cwd,
+    'public',
+    'service-worker.js',
+  );
+  if (fs.existsSync(serviceWorkerFilePath)) {
+    fs.rmSync(path.resolve(serviceWorkerFilePath));
+  }
+
+  const windowFilePath = path.resolve(cwd, 'public', 'window.js');
+  if (fs.existsSync(windowFilePath)) {
+    fs.rmSync(path.resolve(windowFilePath));
+  }
+
+  const windowCssFilePath = path.resolve(cwd, 'public', 'window.css');
+  if (fs.existsSync(windowCssFilePath)) {
+    fs.rmSync(path.resolve(windowCssFilePath));
+  }
+
+  console.log('✅ Removed ewr built files!');
+};
+
+if (process.argv[2]) {
+  if (process.argv[2] === 'build') {
+    module.exports.build();
+  } else if (process.argv[2] === 'dev') {
+    module.exports.dev();
+  } else if (process.argv[2] === 'clean') {
+    module.exports.clean();
+  }
+}
