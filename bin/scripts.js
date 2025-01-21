@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const esbuild = require('esbuild');
+const cssModulesPlugin = require('esbuild-css-modules-plugin');
 const fs = require('fs');
 const fsPromises = require('node:fs/promises');
 const path = require('path');
@@ -9,11 +10,12 @@ const throttle = require('lodash.throttle');
 const httpServer = require('http-server');
 const cwd = process.cwd();
 const publicDirectory = path.resolve(cwd, 'public');
-const appDirectory = path.resolve(cwd, './src/app');
+const srcDirectory = path.resolve(cwd, 'src');
+const appDirectory = path.resolve(srcDirectory, 'app');
 const dotDirectory = path.resolve(cwd, '.ewr');
 const windowDirectory = path.resolve(dotDirectory, 'window');
 const serviceWorkerDirectory = path.resolve(dotDirectory, 'service-worker');
-const nestedDirectoryTsConfig = {
+const tsConfig = {
   compilerOptions: {
     strict: true,
     module: 'nodenext',
@@ -33,11 +35,7 @@ const nestedDirectoryTsConfig = {
     useDefineForClassFields: false,
     isolatedModules: true,
     resolveJsonModule: true,
-    paths: {
-      'app/*': ['../../src/app/*'],
-      'components/*': ['../../src/components/*'],
-      'utils/*': ['../../src/utils/*'],
-    },
+    paths: { '*': ['../../src/*'] },
     plugins: [{ name: 'typescript-plugin-css-modules' }],
   },
   include: ['./*'],
@@ -230,7 +228,7 @@ async function writeRoutesConfigDirectory() {
 
     fs.writeFileSync(
       path.resolve(routeConfigDirectoryPath, 'tsconfig.json'),
-      JSON.stringify(nestedDirectoryTsConfig, null, 2),
+      JSON.stringify(tsConfig, null, 2),
     );
     console.log(`✅ Routes generated successfully!`);
   } catch (error) {
@@ -310,6 +308,7 @@ async function runEsBuild() {
       target: 'es2018',
       format: 'cjs',
       sourcemap: false,
+      plugins: [cssModulesPlugin()],
     };
 
     await esbuild.build({
@@ -361,7 +360,7 @@ async function writeWindowDirectory() {
 
     fs.writeFileSync(
       path.resolve(windowDirectory, 'tsconfig.json'),
-      JSON.stringify(nestedDirectoryTsConfig, null, 2),
+      JSON.stringify(tsConfig, null, 2),
     );
 
     console.log('✅ Window TS files copied successfully!');
@@ -397,7 +396,7 @@ async function writeServiceWorkerDirectory() {
 
     fs.writeFileSync(
       path.resolve(serviceWorkerDirectory, 'tsconfig.json'),
-      JSON.stringify(nestedDirectoryTsConfig, null, 2),
+      JSON.stringify(tsConfig, null, 2),
     );
 
     console.log('✅ Service worker TS files copied successfully!');
