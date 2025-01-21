@@ -73,7 +73,7 @@ to the page component. The path params are passed to this function. You can
 define `getStaticProps` as follows:
 
 ```ts
-export const getStaticProps: swarf.GetStaticProps = async function ({
+export const getStaticProps: GetStaticProps = async function ({
   params: { id },
 }) {
   const apiData = await fetch(`https://myapi.example/data/${id}`).then((res) =>
@@ -92,7 +92,7 @@ If the data is unlikely to change, you can use this function to handle caching
 using the browser's `caches` API:
 
 ```ts
-export const getStaticProps: swarf.GetStaticProps = async function ({
+export const getStaticProps: GetStaticProps = async function ({
   params: { id },
 }) {
   const todosCache = await caches.open('todos-page-props');
@@ -122,7 +122,7 @@ Using a similar strategy, images and other resources can be precached at this
 stage:
 
 ```ts
-export const getStaticProps: swarf.GetStaticProps = async function ({
+export const getStaticProps: GetStaticProps = async function ({
   params: { id },
 }) {
   const userComment = await fetchUserComment({ id });
@@ -154,7 +154,7 @@ export const getStaticProps: swarf.GetStaticProps = async function ({
 title and description. You can define `metadata` as follows:
 
 ```ts
-export const metadata: swarf.Metadata = {
+export const metadata: Metadata = {
   title: 'Page Title',
   description: 'Page description',
 };
@@ -163,7 +163,7 @@ export const metadata: swarf.Metadata = {
 If you need to access the route params, you can export a function instead:
 
 ```ts
-export const metadata: swarf.GetMetadata = ({ params: { id } }) => ({
+export const metadata: GetMetadata = ({ params: { id } }) => ({
   title: 'Note ' + id,
 });
 ```
