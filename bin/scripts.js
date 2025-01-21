@@ -318,7 +318,9 @@ async function runEsBuild() {
       entryPoints: ['./.swarf/service-worker/index.ts'],
     });
 
-    fs.rmSync(path.resolve(cwd, 'public', 'service-worker.css'));
+    if (fs.existsSync(path.resolve(cwd, 'public', 'service-worker.css'))) {
+      fs.rmSync(path.resolve(cwd, 'public', 'service-worker.css'));
+    }
 
     console.log('✅ Service worker file built successfully!');
 
