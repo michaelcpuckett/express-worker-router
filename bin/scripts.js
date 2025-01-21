@@ -537,6 +537,10 @@ module.exports.init = () => {
   writeTypeDefinitionFile();
 };
 
+module.exports.serve = () => {
+  runHttpServer();
+};
+
 if (process.argv[2]) {
   if (process.argv[2] === 'build') {
     module.exports.build();
@@ -546,5 +550,7 @@ if (process.argv[2]) {
     module.exports.clean();
   } else if (process.argv[2] === 'init') {
     module.exports.init();
+  } else if (process.argv[2] === 'serve') {
+    module.exports.serve();
   }
 }

@@ -35,16 +35,22 @@ worker.
 
 ## Installation
 
-After running `npm install swarf --save`, create a `src\app` folder. The folders
-inside are used to define the routes. Folders can be nested. The `page.tsx` file
-inside each folder is the component that renders the body of the page.
+1. In a new repository, run `npm install swarf --save`
 
-Base the directory structure on the
-[starter kit](https://github.com/michaelcpuckett/sw-app-router-starter).
+2. Run `npx swarf init` to establish the essential file structure.
+
+You can also use the template for the
+[starter kit](https://github.com/michaelcpuckett/swarf-starter).
 
 ## Usage
 
-To add a new page:
+The folders inside `src/app` are used to define the routes. Folders can be
+nested. The `page.tsx` file inside each folder is the component that renders the
+body of the page.
+
+Note: Unlike Next.js, there is no `layout.tsx` file.
+
+To add a new route:
 
 1. Create a new folder in the `src/app` directory and create a `page.tsx` file
    inside it.
@@ -53,35 +59,90 @@ To add a new page:
    example, if you want to create a dynamic route for user profiles, you can
    create a folder with a path of `src/app/profiles/[id]`.
 
-   Each route folder should have a `page.tsx` inside. (Unlike Next.js, there is
-   no `layout.tsx` file.)
-
 2. Define the React component for the page as the `default` export.
 
 3. Define and export `getStaticProps` and `metadata`. (See below.)
 
-4. Run `npm run build` to regenerate the routes.
-
-See the
-[Next.js documentation](https://nextjs.org/docs/app/getting-started/layouts-and-pages#creating-a-page)
-but be mindful of differences, such as the lack of `layout.tsx`.
+4. Run `swarf build` to regenerate the routes.
 
 ### Static Props
 
-`getStaticProps` is a function used to fetch data at render time. It allows you
-to fetch data from an API or database and pass it as props to the page
-component. The path params are passed to this function. You can define
-`getStaticProps` as follows:
+`getStaticProps` is an asynchronous function used to fetch data at render time.
+It allows you to call an API or query a database and pass the results as props
+to the page component. The path params are passed to this function. You can
+define `getStaticProps` as follows:
 
 ```ts
-export const getStaticProps: GetStaticProps = async function ({
+export const getStaticProps: swarf.GetStaticProps = async function ({
   params: { id },
 }) {
-  const data = await fetchData({ id });
+  const apiData = await fetch(`https://myapi.example/data/${id}`).then((res) =>
+    res.json(),
+  );
 
   return {
     props: {
-      data,
+      apiData,
+    },
+  };
+};
+```
+
+If the data is unlikely to change, you can use this function to handle caching
+using the browser's `caches` API:
+
+```ts
+export const getStaticProps: swarf.GetStaticProps = async function ({
+  params: { id },
+}) {
+  const todosCache = await caches.open('todos-page-props');
+  const cachedTodo = await todosCache.match(id);
+
+  // Check the cache first.
+
+  if (cachedTodo) {
+    return await cachedTodo.json();
+  }
+
+  const todo = await fetchTodo({ id });
+
+  // Save to cache.
+
+  todosCache.put(id, new Response(JSON.stringify(todo)));
+
+  return {
+    props: {
+      todo,
+    },
+  };
+};
+```
+
+Using a similar strategy, images and other resources can be precached at this
+stage:
+
+```ts
+export const getStaticProps: swarf.GetStaticProps = async function ({
+  params: { id },
+}) {
+  const userComment = await fetchUserComment({ id });
+  const userAvatarUrl = userComment.avatarUrl;
+
+  const userAvatarsCache = await caches.open('user-avatars');
+  const cachedUserAvatar = await userAvatarsCache.match(userAvatarUrl);
+
+  if (!cachedUserAvatar) {
+    const userAvatarFileContents = await fetch(userAvatarUrl).then((res) =>
+      res.blob(),
+    );
+
+    // The image will be available immediately on page load.
+    userAvatarsCache.put(userAvatarUrl, new Response(userAvatarFileContents));
+  }
+
+  return {
+    props: {
+      userComment,
     },
   };
 };
@@ -93,7 +154,7 @@ export const getStaticProps: GetStaticProps = async function ({
 title and description. You can define `metadata` as follows:
 
 ```ts
-export const metadata: Metadata = {
+export const metadata: swarf.Metadata = {
   title: 'Page Title',
   description: 'Page description',
 };
@@ -102,7 +163,7 @@ export const metadata: Metadata = {
 If you need to access the route params, you can export a function instead:
 
 ```ts
-export const metadata: GetMetadata = ({ params: { id } }) => ({
+export const metadata: swarf.GetMetadata = ({ params: { id } }) => ({
   title: 'Note ' + id,
 });
 ```
@@ -139,8 +200,7 @@ should be served as a catch-all route.
 
 ### Fast Page Rendering
 
-Routes can pre-cache or inline key assets. This allows navigation between pages
-to be nearly instantaneous.
+Routes can pre-cache or inline key assets.
 
 ### Simplified Hosting
 
