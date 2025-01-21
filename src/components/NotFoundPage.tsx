@@ -34,7 +34,7 @@ export default function NotFoundPage({ css }: { css: string }) {
       metadata={{
         title: 'Not Found',
       }}
-      css={css}
+      criticalCss={css}
       cssRefs={[]}
       js=""
     >

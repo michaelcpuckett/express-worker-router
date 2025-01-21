@@ -4,14 +4,14 @@ import { GetStaticProps, Metadata } from '../types';
 export function PageShell({
   staticProps,
   metadata,
-  css,
+  criticalCss,
   cssRefs,
   js,
   children,
 }: React.PropsWithChildren<{
   staticProps: Awaited<ReturnType<GetStaticProps>>;
   metadata: Metadata;
-  css: string;
+  criticalCss: string;
   cssRefs: string[];
   js: string;
 }>) {
@@ -23,6 +23,16 @@ export function PageShell({
         <meta
           httpEquiv="Cache-Control"
           content="no-store"
+        />
+        <link
+          href="/favicon.ico"
+          rel="icon"
+          type="image/x-icon"
+        />
+        <link
+          href="/favicon.png"
+          rel="icon"
+          type="image/png"
         />
         {metadata.description && (
           <meta
@@ -36,7 +46,7 @@ export function PageShell({
         />
         <style
           dangerouslySetInnerHTML={{
-            __html: css,
+            __html: criticalCss,
           }}
         ></style>
       </head>

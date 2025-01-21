@@ -8,6 +8,8 @@ const prettier = require('prettier');
 const throttle = require('lodash.throttle');
 const httpServer = require('http-server');
 const cwd = process.cwd();
+const publicDirectory = path.resolve(cwd, 'public');
+const appDirectory = path.resolve(cwd, './src/app');
 const dotDirectory = path.resolve(cwd, '.ewr');
 const windowDirectory = path.resolve(dotDirectory, 'window');
 const serviceWorkerDirectory = path.resolve(dotDirectory, 'service-worker');
@@ -41,16 +43,49 @@ const nestedDirectoryTsConfig = {
   include: ['./*'],
 };
 
+function copyAppDirectoryFiles() {
+  const appFiles = fs.readdirSync(appDirectory).filter((file) => {
+    if (fs.lstatSync(path.resolve(appDirectory, file)).isDirectory()) {
+      return false;
+    }
+
+    return !file.endsWith('.tsx') && !file.endsWith('.module.css');
+  });
+
+  appFiles.forEach((file) => {
+    if (file === 'index.html') {
+      const source = path.resolve(appDirectory, file);
+      const destination = path.resolve(publicDirectory, '404.html');
+
+      fs.copyFileSync(source, destination);
+
+      return;
+    }
+
+    const source = path.resolve(appDirectory, file);
+    const destination = path.resolve(publicDirectory, file);
+
+    fs.copyFileSync(source, destination);
+  });
+
+  if (!fs.existsSync(path.resolve(publicDirectory, '404.html'))) {
+    const notFoundFileContent = `<!DOCTYPE html><script src="/install.js"></script>`;
+
+    fs.writeFileSync(
+      path.resolve(publicDirectory, '404.html'),
+      notFoundFileContent,
+    );
+  }
+}
+
 async function writePublicDirectory() {
   try {
-    const publicDirectoryPath = path.resolve(cwd, 'public');
-
-    if (!fs.existsSync(publicDirectoryPath)) {
-      fs.mkdirSync(publicDirectoryPath);
+    if (!fs.existsSync(publicDirectory)) {
+      fs.mkdirSync(publicDirectory);
     }
 
     const installServiceWorkerFilePath = path.resolve(
-      publicDirectoryPath,
+      publicDirectory,
       'install.js',
     );
 
@@ -99,28 +134,6 @@ async function writePublicDirectory() {
       installServiceWorkerFileContent,
     );
 
-    const NotFoundFilePath = path.resolve(publicDirectoryPath, '404.html');
-
-    if (!fs.existsSync(NotFoundFilePath)) {
-      const NotFoundFileContent = await prettier.format(
-        `<script src="/install.js"></script>`,
-        {
-          parser: 'html',
-        },
-      );
-
-      fs.writeFileSync(NotFoundFilePath, NotFoundFileContent);
-    }
-
-    const criticalCssFilePath = path.resolve(
-      publicDirectoryPath,
-      'critical.css',
-    );
-
-    if (!fs.existsSync(criticalCssFilePath)) {
-      fs.writeFileSync(criticalCssFilePath, '');
-    }
-
     console.log('✅ Public directory created successfully!');
   } catch (error) {
     console.error('❌ Error creating public directory:', error);
@@ -142,12 +155,10 @@ async function writeDotDirectory() {
   await writeWindowDirectory();
   await writeServiceWorkerDirectory();
   await writeRoutesConfigDirectory();
-  writeStaticAssetsFile();
 }
 
 function getRoutesFromAppDirectory() {
   const routes = [];
-  const appDir = path.resolve(cwd, './src/app');
 
   function traverseDirectory(currentDir) {
     const files = fs.readdirSync(currentDir);
@@ -159,7 +170,7 @@ function getRoutesFromAppDirectory() {
         traverseDirectory(filePath);
       } else if (file.endsWith('.tsx')) {
         const pageName = path
-          .relative(appDir, filePath)
+          .relative(appDirectory, filePath)
           .replace(/\\/g, '/')
           .replace(/\.tsx$/, '');
         routes.push(`/${pageName}`);
@@ -167,7 +178,7 @@ function getRoutesFromAppDirectory() {
     });
   }
 
-  traverseDirectory(appDir);
+  traverseDirectory(appDirectory);
 
   return routes;
 }
@@ -230,13 +241,10 @@ async function writeRoutesConfigDirectory() {
 function getStaticFiles() {
   return Array.from(
     new Set([
-      '404.html',
-      'install.js',
       'service-worker.js',
       'window.js',
-      'cache.json',
-      'critical.css',
       'window.css',
+      'globals.css',
       ...fs.readdirSync(path.resolve(cwd, 'public')),
     ]),
   )
@@ -399,7 +407,13 @@ async function writeServiceWorkerDirectory() {
 }
 
 module.exports.build = () => {
-  writePublicDirectory().then(writeDotDirectory).then(runEsBuild);
+  writePublicDirectory()
+    .then(writeDotDirectory)
+    .then(() => {
+      copyAppDirectoryFiles();
+      writeStaticAssetsFile();
+      runEsBuild();
+    });
 };
 
 async function runHttpServer() {
@@ -452,38 +466,8 @@ module.exports.clean = () => {
     fs.rmSync(dotDirectory, { recursive: true });
   }
 
-  const cacheFilePath = path.resolve(cwd, 'public', 'cache.json');
-  if (fs.existsSync(cacheFilePath)) {
-    fs.rmSync(path.resolve(cacheFilePath));
-  }
-
-  const staticFilePath = path.resolve(cwd, 'public', 'static.json');
-  if (fs.existsSync(staticFilePath)) {
-    fs.rmSync(path.resolve(staticFilePath));
-  }
-
-  const installFilePath = path.resolve(cwd, 'public', 'install.js');
-  if (fs.existsSync(installFilePath)) {
-    fs.rmSync(path.resolve(installFilePath));
-  }
-
-  const serviceWorkerFilePath = path.resolve(
-    cwd,
-    'public',
-    'service-worker.js',
-  );
-  if (fs.existsSync(serviceWorkerFilePath)) {
-    fs.rmSync(path.resolve(serviceWorkerFilePath));
-  }
-
-  const windowFilePath = path.resolve(cwd, 'public', 'window.js');
-  if (fs.existsSync(windowFilePath)) {
-    fs.rmSync(path.resolve(windowFilePath));
-  }
-
-  const windowCssFilePath = path.resolve(cwd, 'public', 'window.css');
-  if (fs.existsSync(windowCssFilePath)) {
-    fs.rmSync(path.resolve(windowCssFilePath));
+  if (fs.existsSync(publicDirectory)) {
+    fs.rmSync(publicDirectory, { recursive: true });
   }
 
   console.log('✅ Removed ewr built files!');
