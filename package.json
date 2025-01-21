@@ -1,6 +1,6 @@
 {
   "name": "@express-worker/router",
-  "version": "1.7.2",
+  "version": "1.7.7",
   "publishConfig": {
     "access": "public"
   },
