@@ -241,8 +241,6 @@ function getStaticFiles() {
     new Set([
       'service-worker.js',
       'window.js',
-      'window.css',
-      'globals.css',
       ...fs.readdirSync(path.resolve(cwd, 'public')),
     ]),
   )
