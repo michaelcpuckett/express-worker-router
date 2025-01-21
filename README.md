@@ -1,7 +1,7 @@
-# @express-worker/router
+# @express-worker/router (EWR)
 
-ExpressWorker/Router provides a simple Next.js-like API for serving
-dynamically-generated, React-hydrated HTML web pages inside a Service Worker.
+EWR provides a simple Next.js-like API for serving dynamically-generated,
+React-hydrated HTML web pages inside a Service Worker.
 
 This is part of the @express-worker ecosystem. It depends on
 [@express-worker/app](https://github.com/michaelcpuckett/express-worker) to
@@ -106,16 +106,14 @@ export default function HomePage({ data }: { data: Data }) {
 
 ## Development
 
-Run `npm run watch` and `npm run serve` in separate terminals.
+Run `ewr dev` during development.
 
 For easiest debugging, in the Web Inspector, under the Application tab, under
 Service Workers, select the checkbox for "Update on reload".
 
-Styles can be edited directly in `public/styles.css`.
-
 ## Production Builds
 
-Use `npm run build` to generate a production build.
+Run `ewr build` to generate a production build/
 
 The built-in strategy for invalidating the old cache and serving the updated
 content is through incrementing the version in `router.config.json`.
