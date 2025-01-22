@@ -1,6 +1,6 @@
 {
   "name": "swarf",
-  "version": "0.0.11",
+  "version": "0.0.20",
   "description": "Serve dynamic HTML with React inside a Service Worker",
   "scripts": {
     "format": "prettier --config .prettierrc \"**/*.{ts,tsx}\" --write"
@@ -9,6 +9,7 @@
   "license": "MIT",
   "files": [
     "bin",
+    "build",
     "src"
   ],
   "exports": {
