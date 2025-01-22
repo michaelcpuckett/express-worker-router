@@ -6,6 +6,7 @@ module.exports.default = function getStaticFiles() {
     new Set([
       'service-worker.js',
       'window.js',
+      'window.css',
       ...fs.readdirSync(publicDirectory),
     ]),
   )

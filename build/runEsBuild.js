@@ -36,6 +36,10 @@ module.exports.default = async function runEsBuild() {
       entryPoints: ['./.swarf/window/index.ts'],
     });
 
+    if (!fs.existsSync(path.resolve(publicDirectory, 'window.css'))) {
+      fs.writeFileSync(path.resolve(publicDirectory, 'window.css'), '');
+    }
+
     console.log('✅ Window file built successfully!');
   } catch (error) {
     console.error('❌ Error building project:', error);
