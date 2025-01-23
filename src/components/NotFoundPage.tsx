@@ -1,41 +1,19 @@
 import { PageShell } from './PageShell';
 
 export async function getStaticProps() {
-  const cache = await caches.open('public');
-  const cssFiles = (await cache.keys()).filter((key) =>
-    key.url.endsWith('.css'),
-  );
-
-  const cssFileContents = (
-    await Promise.all(
-      cssFiles.map(async (file) => {
-        const response = await cache.match(file.url);
-
-        if (!response) {
-          return '';
-        }
-
-        return response.text();
-      }),
-    )
-  ).join('\n\n');
-
   return {
-    props: {
-      css: cssFileContents,
-    },
+    props: {},
   };
 }
 
-export default function NotFoundPage({ css }: { css: string }) {
+export default function NotFoundPage() {
   return (
     <PageShell
       staticProps={{}}
       metadata={{
         title: 'Not Found',
       }}
-      criticalCss={css}
-      cssRefs={[]}
+      cssRefs={['/globals.css']}
       js=""
     >
       <header>

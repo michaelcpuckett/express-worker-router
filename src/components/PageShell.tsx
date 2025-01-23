@@ -4,14 +4,12 @@ import { GetStaticProps, Metadata } from '../types';
 export function PageShell({
   staticProps,
   metadata,
-  criticalCss,
   cssRefs,
   js,
   children,
 }: React.PropsWithChildren<{
   staticProps: Awaited<ReturnType<GetStaticProps>>;
   metadata: Metadata;
-  criticalCss: string;
   cssRefs: string[];
   js: string;
 }>) {
@@ -44,11 +42,13 @@ export function PageShell({
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=1"
         />
-        <style
-          dangerouslySetInnerHTML={{
-            __html: criticalCss,
-          }}
-        ></style>
+        {cssRefs.map((ref) => (
+          <link
+            key={ref}
+            rel="stylesheet"
+            href={ref}
+          />
+        ))}
       </head>
       <body>
         <div id="root">{children}</div>
@@ -59,13 +59,6 @@ export function PageShell({
             )}`,
           }}
         />
-        {cssRefs.map((ref) => (
-          <link
-            key={ref}
-            rel="stylesheet"
-            href={ref}
-          />
-        ))}
         <script
           dangerouslySetInnerHTML={{
             __html: js.replace(/<\/script>/g, '</scr"+"ipt>'),

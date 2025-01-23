@@ -62,6 +62,8 @@ module.exports.clean = () => {
 module.exports.init = () => {
   writeAppDirectory();
   writeTypeDefinitionFile();
+
+  console.log('✅ Initialized project!');
 };
 
 module.exports.serve = () => {

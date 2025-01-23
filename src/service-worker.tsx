@@ -98,20 +98,8 @@ export function useAppRouter({
         try {
           const staticProps = await getStaticProps({ params: req.params });
           const cache = await caches.open('public');
-          const cssFileContents = await (async () => {
-            const response = await cache.match('/globals.css');
 
-            if (!response) {
-              throw new Error('Cache miss.');
-            }
-
-            return response.text();
-          })();
-
-          const cssUrls = staticFiles
-            .filter((url) => url.endsWith('.css'))
-            .filter((url) => url !== '/globals.css');
-
+          const cssUrls = staticFiles.filter((url) => url.endsWith('.css'));
           const jsFile = await cache.match('/window.js');
 
           if (!jsFile) {
@@ -129,7 +117,6 @@ export function useAppRouter({
             <PageShell
               metadata={metadata}
               staticProps={staticProps}
-              criticalCss={cssFileContents}
               cssRefs={cssUrls}
               js={jsFileContents}
             >
