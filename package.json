@@ -1,6 +1,6 @@
 {
   "name": "swarf",
-  "version": "0.0.25",
+  "version": "0.0.27",
   "description": "Serve dynamic HTML with React inside a Service Worker",
   "scripts": {
     "format": "prettier --config .prettierrc \"**/*.{ts,tsx}\" --write"
