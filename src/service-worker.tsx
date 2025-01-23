@@ -99,7 +99,19 @@ export function useAppRouter({
           const staticProps = await getStaticProps({ params: req.params });
           const cache = await caches.open('public');
 
-          const cssUrls = staticFiles.filter((url) => url.endsWith('.css'));
+          const cssUrls = staticFiles
+            .filter((url) => url.endsWith('.css'))
+            .sort((a, b) => {
+              if (a === '/globals.css') {
+                return -1;
+              }
+
+              if (b === '/globals.css') {
+                return 1;
+              }
+
+              return 0;
+            });
           const jsFile = await cache.match('/window.js');
 
           if (!jsFile) {
