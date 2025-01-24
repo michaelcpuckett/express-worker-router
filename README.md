@@ -221,6 +221,7 @@ using a separate build process to create server-rendered pages.
 ## Limitations / Future Work
 
 - React Server Components (streaming responses) are not yet supported.
+- Decide if this could/should be a Next.js plugin.
 
 ## License
 
