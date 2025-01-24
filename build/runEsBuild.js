@@ -10,7 +10,7 @@ module.exports.default = async function runEsBuild() {
       logLevel: 'warning',
       bundle: true,
       platform: 'browser',
-      target: 'es2018',
+      target: 'es2020',
       format: 'cjs',
       sourcemap: false,
       plugins: [cssModulesPlugin()],
